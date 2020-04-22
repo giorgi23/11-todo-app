@@ -6,4 +6,7 @@
 //  Copyright © 2020 App Brewery. All rights reserved.
 //
 
-import Foundation
+import UIKit
+class Test: UITableViewController {
+    
+}
