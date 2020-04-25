@@ -13,6 +13,15 @@ class ToDoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     
+    var selectedCategory : Category? {
+        
+        didSet {
+            print("This is \(selectedCategory!.name ?? "nothing")")
+            loadItems()
+        }
+        
+    }
+    
     //let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
@@ -22,7 +31,6 @@ class ToDoListViewController: UITableViewController {
         
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
-        loadItems()
     }
     
     //MARK: - Tableview Datasource Methods
@@ -48,11 +56,11 @@ class ToDoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-//        context.delete(itemArray[indexPath.row])
-//        itemArray.remove(at: indexPath.row)
+        //context.delete(itemArray[indexPath.row])
+        //itemArray.remove(at: indexPath.row)
         
         
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        itemArray[indexPath.row].done.toggle()
         
         saveItems()
         
@@ -73,6 +81,7 @@ class ToDoListViewController: UITableViewController {
             let newItem = Item(context: self.context)
             newItem.title = storageTextField.text!
             newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
             
             self.saveItems()
@@ -110,7 +119,21 @@ class ToDoListViewController: UITableViewController {
     
     func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
         
-        //let request: NSFetchRequest<Item> = Item.fetchRequest()
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if request.predicate != nil {
+            //Search bar request came in, assemble complex preidcate
+            
+            let andPredicate = NSCompoundPredicate(type: NSCompoundPredicate.LogicalType.and, subpredicates: [categoryPredicate, request.predicate!])
+            
+            request.predicate = andPredicate
+            
+        } else {
+            //Default request, load only category relevant items
+            
+            request.predicate = categoryPredicate
+        }
+        
         
         do {
           itemArray = try context.fetch(request)
@@ -141,14 +164,13 @@ extension ToDoListViewController: UISearchBarDelegate {
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        print(itemArray.count)
+
         if searchBar.text?.count == 0 {
             loadItems()
             
             DispatchQueue.main.async {
                 searchBar.resignFirstResponder()
             }
-            
             
         } else {
             searchBarSearchButtonClicked(searchBar)
