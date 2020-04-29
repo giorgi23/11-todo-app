@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class ToDoListViewController: UITableViewController {
     
@@ -29,6 +30,8 @@ class ToDoListViewController: UITableViewController {
         
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
+        title = selectedCategory?.name
+        
     }
     
     //MARK: - Tableview Datasource Methods
@@ -44,6 +47,22 @@ class ToDoListViewController: UITableViewController {
         if let dataToShow = todoItems?[indexPath.row] {
             
             cell.textLabel?.text = dataToShow.title
+            
+            if let color = UIColor(hexString: selectedCategory!.color)?.darken(byPercentage: CGFloat(indexPath.row) * 0.4/CGFloat(todoItems!.count)) {
+                
+                cell.backgroundColor = color
+                
+                cell.textLabel?.textColor = ContrastColorOf(color, returnFlat: true)
+                
+            }
+            
+            
+            
+            
+            
+            
+            
+            
             
             cell.accessoryType = dataToShow.done == true ? .checkmark : .none
         } else {
